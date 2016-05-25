@@ -1,0 +1,88 @@
+Use libkvm instead of /proc on *BSD for test runner.
+
+TODO: check on Net/Free.
+--- Makefile.am.orig	Mon Nov 23 23:06:44 2015
++++ Makefile.am	Thu Mar 24 16:21:31 2016
+@@ -183,7 +183,7 @@ libtest_runner_la_LIBADD =			\
+ 	libwayland-util.la			\
+ 	libwayland-client.la			\
+ 	libwayland-server.la			\
+-	-lrt -ldl $(FFI_LIBS)
++	-lrt -ldl $(FFI_LIBS) $(KVM_LIBS)
+ 
+ 
+ array_test_SOURCES = tests/array-test.c
+--- tests/test-helpers.c.orig	Sat Jun 13 01:31:24 2015
++++ tests/test-helpers.c	Sun Jan 10 16:17:47 2016
+@@ -23,6 +23,16 @@
+  * SOFTWARE.
+  */
+ 
++#include "../config.h"
++
++#ifdef USE_LIBKVM
++#include <sys/types.h>
++#include <sys/sysctl.h>
++#include <fcntl.h>
++#include <kvm.h>
++#include <limits.h>
++#endif
++
+ #include <assert.h>
+ #include <errno.h>
+ #include <dirent.h>
+@@ -35,6 +45,25 @@
+ int
+ count_open_fds(void)
+ {
++#ifdef USE_LIBKVM
++	/* Use BSD-specific kernel memory interface */
++
++	struct kinfo_file *kif;
++	kvm_t *kd;
++	int count;
++	char errstr[_POSIX2_LINE_MAX];
++
++	kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY|KVM_NO_FILES, errstr);
++	assert(kd != NULL);
++	kif = kvm_getfiles(kd, KERN_FILE_BYPID, getpid(), sizeof(struct kinfo_file), &count);
++	assert(kif != NULL);
++
++	/* KVM library frees memory on itself */
++	kvm_close(kd);
++	return count;
++#else
++	/* Use /proc filesystem. */
++
+ 	DIR *dir;
+ 	struct dirent *ent;
+ 	int count = 0;
+@@ -54,6 +83,7 @@ count_open_fds(void)
+ 	closedir(dir);
+ 
+ 	return count;
++#endif
+ }
+ 
+ void
+--- configure.ac.orig	Tue Feb 16 23:03:05 2016
++++ configure.ac	Thu Mar 24 16:21:31 2016
+@@ -54,6 +54,18 @@ AC_SUBST(GCC_CFLAGS)
+ 
+ AC_CHECK_FUNCS([accept4 mkostemp posix_fallocate])
+ 
++# Replacement for /proc on BSD
++AC_CHECK_HEADERS([kvm.h])
++SAVE_LIBS="$LIBS"
++LIBS=
++AC_CHECK_LIB([kvm], [kvm_getfiles])
++KVM_LIBS="$LIBS"
++LIBS="$SAVE_LIBS"
++AC_SUBST(KVM_LIBS)
++if test "x$ac_cv_header_kvm_h" != "x" && test "x$ac_cv_lib_kvm_kvm_getfiles" != "x"; then
++	AC_DEFINE(USE_LIBKVM, 1, [use libkvm on BSD])
++fi
++
+ AC_ARG_ENABLE([libraries],
+ 	      [AC_HELP_STRING([--disable-libraries],
+ 			      [Disable compilation of wayland libraries])],
