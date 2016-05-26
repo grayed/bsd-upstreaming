@@ -1,0 +1,30 @@
+commit cf9629d32825937d55515f069935735aaa2b752c
+Author: Kamil Rytarowski <n54@gmx.com>
+Date:   Thu May 26 02:46:55 2016 +0200
+
+    Add Interix target
+    
+    Change-Id: I95bd12f4cb28bac8651fb7bf7153c4820ebba109
+
+diff --git a/src/corelib/global/qsystemdetection.h b/src/corelib/global/qsystemdetection.h
+index f1abc88..b6a7835 100644
+--- a/src/corelib/global/qsystemdetection.h
++++ b/src/corelib/global/qsystemdetection.h
+@@ -60,6 +60,7 @@
+      NETBSD   - NetBSD
+      OPENBSD  - OpenBSD
+      BSDI     - BSD/OS
++     INTERIX  - Interix
+      IRIX     - SGI Irix
+      OSF      - HP Tru64 UNIX
+      SCO      - SCO OpenServer 5
+@@ -147,6 +148,9 @@
+ #elif defined(__bsdi__)
+ #  define Q_OS_BSDI
+ #  define Q_OS_BSD4
++#elif defined(__INTERIX)
++#  define Q_OS_INTERIX
++#  define Q_OS_BSD4
+ #elif defined(__sgi)
+ #  define Q_OS_IRIX
+ #elif defined(__osf__)
