@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2015 The Qt Company Ltd.
+** Copyright (C) 2016 The Qt Company Ltd.
 ** Contact: http://www.qt.io/licensing/
 **
 ** This file is part of the qmake spec of the Qt Toolkit.
@@ -31,16 +31,43 @@
 **
 ****************************************************************************/
 
-#ifndef QPLATFORMDEFS_H
-#define QPLATFORMDEFS_H
+// no #ifdef defense macro, to catch #include mistakes
 
-#include <sys/types.h>
+// The
+//  #include <sys/param.h>
+// and/or
+//  #include <sys/types.h>
+// should be included by parent, depending on corresponding OS policy
 
-#include "../common/bsd.h"
+#include <sys/ioctl.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/wait.h>
 
-// Older NetBSD versions may still use the a.out format instead of ELF.
-#ifndef __ELF__
-#define QT_AOUT_UNDERSCORE
+#include <netinet/in.h>
+#ifndef QT_NO_IPV6IFNAME
+#include <net/if.h>
 #endif
 
-#endif // QPLATFORMDEFS_H
+// Get Qt defines/settings
+#include <qglobal.h>
+
+#include <dirent.h>
+#include <dlfcn.h>
+#include <fcntl.h>
+#include <grp.h>
+#include <pthread.h>
+#include <pwd.h>
+#include <signal.h>
+#include <unistd.h>
+
+#include "../common/posix/qplatformdefs.h"
+
+#undef QT_OPEN_LARGEFILE
+#define QT_OPEN_LARGEFILE       0
+
+#define QT_SNPRINTF             ::snprintf
+#define QT_VSNPRINTF            ::vsnprintf
