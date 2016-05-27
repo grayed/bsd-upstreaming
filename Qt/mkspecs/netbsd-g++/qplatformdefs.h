@@ -36,7 +36,7 @@
 
 #include <sys/types.h>
 
-#include "../common/bsd.h"
+#include "../common/bsd/qplatformdefs.h"
 
 // Older NetBSD versions may still use the a.out format instead of ELF.
 #ifndef __ELF__
