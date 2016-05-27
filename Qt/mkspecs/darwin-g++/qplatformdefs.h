@@ -36,6 +36,6 @@
 
 #include <sys/types.h>
 
-#include "../common/bsd.h"
+#include "../common/bsd/bsd.h"
 
 #endif // QPLATFORMDEFS_H
