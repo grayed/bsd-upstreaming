@@ -34,7 +34,7 @@
 #ifndef QPLATFORMDEFS_H
 #define QPLATFORMDEFS_H
 
-#include <sys/param.h>
+// let's see how it goes without kitchensink AKA #include <sys/param.h>
 #include <sys/types.h>
 
 #include "../common/bsd/qplatformdefs.h"
