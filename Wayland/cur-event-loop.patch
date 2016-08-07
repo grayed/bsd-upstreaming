@@ -318,8 +318,7 @@ NOTE: wrapping fcntl() on OpenBSD (at least) isn't possible, so tests will fail.
 +#if defined(HAVE_SYS_SIGNALFD_H)
  static int
  wl_event_source_signal_dispatch(struct wl_event_source *source,
--			       struct epoll_event *ep)
-+                                struct epoll_event *ep)
+ 			       struct epoll_event *ep)
  {
 -	struct wl_event_source_signal *signal_source =
 -		(struct wl_event_source_signal *) source;
@@ -459,7 +458,7 @@ NOTE: wrapping fcntl() on OpenBSD (at least) isn't possible, so tests will fail.
  struct wl_event_source_idle {
  	struct wl_event_source base;
  	wl_event_loop_idle_func_t func;
-@@ -311,15 +561,19 @@ wl_event_source_check(struct wl_event_source *source)
+@@ -311,15 +561,17 @@ wl_event_source_check(struct wl_event_source *source)
  	wl_list_insert(source->loop->check_list.prev, &source->link);
  }
  
@@ -470,19 +469,15 @@ NOTE: wrapping fcntl() on OpenBSD (at least) isn't possible, so tests will fail.
  {
  	struct wl_event_loop *loop = source->loop;
  
--	/* We need to explicitly remove the fd, since closing the fd
--	 * isn't enough in case we've dup'ed the fd. */
-+	/*
-+	 * We need to explicitly remove the fd, since closing the fd
-+	 * isn't enough in case we've dup'ed the fd.
-+	 */
+ 	/* We need to explicitly remove the fd, since closing the fd
+ 	 * isn't enough in case we've dup'ed the fd. */
  	if (source->fd >= 0) {
 -		epoll_ctl(loop->epoll_fd, EPOLL_CTL_DEL, source->fd, NULL);
 +		epoll_ctl(loop->event_fd, EPOLL_CTL_DEL, source->fd, NULL);
  		close(source->fd);
  		source->fd = -1;
  	}
-@@ -329,7 +583,87 @@ wl_event_source_remove(struct wl_event_source *source)
+@@ -329,7 +581,87 @@ wl_event_source_remove(struct wl_event_source *source)
  
  	return 0;
  }
@@ -570,7 +565,7 @@ NOTE: wrapping fcntl() on OpenBSD (at least) isn't possible, so tests will fail.
  static void
  wl_event_loop_process_destroy_list(struct wl_event_loop *loop)
  {
-@@ -345,20 +679,29 @@ WL_EXPORT struct wl_event_loop *
+@@ -345,20 +676,29 @@ WL_EXPORT struct wl_event_loop *
  wl_event_loop_create(void)
  {
  	struct wl_event_loop *loop;
@@ -589,7 +584,6 @@ NOTE: wrapping fcntl() on OpenBSD (at least) isn't possible, so tests will fail.
  		free(loop);
  		return NULL;
  	}
-+
  	wl_list_init(&loop->check_list);
  	wl_list_init(&loop->idle_list);
  	wl_list_init(&loop->destroy_list);
@@ -615,11 +609,10 @@ NOTE: wrapping fcntl() on OpenBSD (at least) isn't possible, so tests will fail.
  static int
  post_dispatch_check(struct wl_event_loop *loop)
  {
--	struct epoll_event ep;
 +#ifdef HAVE_SYS_EPOLL_H
  	struct wl_event_source *source, *next;
+ 	struct epoll_event ep;
  	int n;
-+	struct epoll_event ep;
  
  	ep.events = 0;
  	n = 0;
@@ -629,8 +622,8 @@ NOTE: wrapping fcntl() on OpenBSD (at least) isn't possible, so tests will fail.
  
 +#elif HAVE_SYS_EVENT_H
 +	struct wl_event_source *source, *next;
-+	int n;
 +	struct kevent ev;
++	int n;
 +
 +	memset(&ev, 0, sizeof(struct kevent));
 +	n = 0;
@@ -641,7 +634,7 @@ NOTE: wrapping fcntl() on OpenBSD (at least) isn't possible, so tests will fail.
  }
  
  WL_EXPORT void
-@@ -402,6 +757,7 @@ wl_event_loop_dispatch_idle(struct wl_event_loop *loop
+@@ -402,6 +754,7 @@ wl_event_loop_dispatch_idle(struct wl_event_loop *loop
  	}
  }
  
@@ -649,7 +642,7 @@ NOTE: wrapping fcntl() on OpenBSD (at least) isn't possible, so tests will fail.
  WL_EXPORT int
  wl_event_loop_dispatch(struct wl_event_loop *loop, int timeout)
  {
-@@ -411,7 +767,7 @@ wl_event_loop_dispatch(struct wl_event_loop *loop, int
+@@ -411,7 +764,7 @@ wl_event_loop_dispatch(struct wl_event_loop *loop, int
  
  	wl_event_loop_dispatch_idle(loop);
  
@@ -658,7 +651,7 @@ NOTE: wrapping fcntl() on OpenBSD (at least) isn't possible, so tests will fail.
  	if (count < 0)
  		return -1;
  
-@@ -431,11 +787,53 @@ wl_event_loop_dispatch(struct wl_event_loop *loop, int
+@@ -431,11 +784,53 @@ wl_event_loop_dispatch(struct wl_event_loop *loop, int
  
  	return 0;
  }
